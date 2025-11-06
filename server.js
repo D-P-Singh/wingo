@@ -16,7 +16,7 @@ const scheduler = require('./sheduler/sheduler');
 
 const app = express();
 app.use(helmet());
-app.use(cors({ origin: '*', credentials: true }));
+app.use(cors({ origin: 'https://wingo91.netlify.app', credentials: true }));
 app.use(express.json());
 
 // Rate limiter
