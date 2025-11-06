@@ -27,7 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/bet', betRoutes);
 //app.use('/admin', adminRoutes);
-app.get('/', (req, res) => res.send("running");
+app.get('/', (req, res) => res.send("running"));
 // Diagnostic endpoint
 app.get('/api/time', (req, res) => res.json({ serverTime: Date.now() }));
 
