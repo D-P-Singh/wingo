@@ -16,7 +16,7 @@ const scheduler = require('./sheduler/sheduler');
 
 const app = express();
 app.use(helmet());
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: 'https://wingo91.netlify.app', credentials: true }));
 app.use(express.json());
 
 // Rate limiter
@@ -27,7 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/bet', betRoutes);   
 //app.use('/admin', adminRoutes);
-
+app.get('/', (req, res) => res.send("running"));
 // Diagnostic endpoint
 app.get('/api/time', (req, res) => res.json({ serverTime: Date.now() }));
 
