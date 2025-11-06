@@ -16,7 +16,7 @@ const scheduler = require('./sheduler/sheduler');
 
 const app = express();
 app.use(helmet());
-app.use(cors({ origin: 'https://sparkly-lokum-3febf3.netlify.app/', credentials: true }));
+app.use(cors({ origin: 'https://sparkly-lokum-3febf3.netlify.app', credentials: true }));
 app.use(express.json());
 
 // Rate limiter
