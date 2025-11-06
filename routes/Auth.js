@@ -5,18 +5,18 @@ const User = require('../models/User');
 const router = express.Router();
 
 router.post('/register', async (req, res) => {
-    const { email,name, password, } = req.body;
-    if (!email,!name || !password) return res.status(400).json({ msg: 'Missing' });
-    const exists = await User.findOne({ email });
+    const { email,name, password,phone } = req.body;
+    if (!email, !name || !password, !phone) return res.status(400).json({ msg: 'Missing' });
+    const exists = await User.findOne({ email ,phone});
     if (exists) return res.status(400).json({ msg: 'User exists' });
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ email ,name, password: hash });
+    const user = await User.create({ email ,name,phone, password: hash });
     res.json({ ok: true, userId: user._id });
 });
 
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const { phone, password } = req.body;
+    const user = await User.findOne({ phone });
     if (!user) return res.status(400).json({ msg: 'Invalid' });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ msg: 'Invalid' });

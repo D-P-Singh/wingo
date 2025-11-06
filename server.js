@@ -7,7 +7,7 @@ const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./routes/Auth');
 const walletRoutes = require('./routes/wallet_routes');
 const betRoutes = require('./routes/Bet_Routes');
 //const adminRoutes = require('./admin/routes/admin_routes');
@@ -25,7 +25,7 @@ app.use(rateLimit({ windowMs: 10 * 1000, max: 50 }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
-app.use('/api/bet', betRoutes);
+app.use('/api/bet', betRoutes);   
 //app.use('/admin', adminRoutes);
 
 // Diagnostic endpoint
