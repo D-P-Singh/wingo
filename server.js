@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
-const helmet = require('helmet');
+const helmet = require('helmet'); 
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const { Server } = require('socket.io');
@@ -10,13 +10,27 @@ const { Server } = require('socket.io');
 const authRoutes = require('./routes/Auth');
 const walletRoutes = require('./routes/wallet_routes');
 const betRoutes = require('./routes/Bet_Routes');
+const userRoutes = require('./routes/User_Routes');
 //const adminRoutes = require('./admin/routes/admin_routes');
 const initSockets = require('./sockets/index');
 const scheduler = require('./sheduler/sheduler');
 
 const app = express();
 app.use(helmet());
-app.use(cors({ origin: 'https://wingo91.netlify.app', credentials: true }));
+const allowedOrigins = [
+    "http://localhost:3000",      // local frontend
+    "https://wingo91.netlify.app"    // live frontend
+];
+app.use(cors({
+    origin: function (origin, callback) {
+        // allow requests with no origin (like Postman)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = `The CORS policy for this site does not allow access from the specified origin.`;
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    }, credentials: true }));
 app.use(express.json());
  
 // Rate limiter
@@ -26,6 +40,7 @@ app.use(rateLimit({ windowMs: 10 * 1000, max: 50 }));
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/bet', betRoutes);   
+app.use('/api/user', userRoutes);   
 //app.use('/admin', adminRoutes);
 app.get('/', (req, res) => res.send("running"));
 // Diagnostic endpoint

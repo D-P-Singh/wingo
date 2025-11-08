@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
     photo: String,
     emailVerified: { type: Boolean, default: false },
     phoneVerified: { type: Boolean, default: false },
+    isAdmin: { type: Boolean, default: false }, // Admin flag
 }, { timestamps: true });
 module.exports = mongoose.model("User", userSchema);
 

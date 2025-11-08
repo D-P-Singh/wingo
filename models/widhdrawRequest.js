@@ -1,13 +1,21 @@
-const mongoose = require('mongoose');
-const WithdrawRequestSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    username: String,
-    amount: Number,
-    utr: String,
-    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date },});
-module.exports = mongoose.model('WithdrawRequest', WithdrawRequestSchema);
+const mongoose = require("mongoose");
+
+const withdrawSchema = new mongoose.Schema(
+    {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        amount: { type: Number, required: true, min: 1 },
+        paymentMethod: { type: String, enum: ["UPI", "Bank Transfer", "Paytm", "Other"], required: true },
+        accountNumber: { type: String, required: true }, // Bank account / UPI ID
+        ifsc: { type: String }, // Optional for bank
+        status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+        approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin who approved
+        approvedAt: { type: Date },
+    },
+    { timestamps: true }
+);
+
+module.exports = mongoose.model("Withdraw", withdrawSchema);
+
 
 
 /* const mongoose = require('mongoose');

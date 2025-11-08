@@ -5,8 +5,9 @@ const auth = require('../middleware/auth');
 const User = require('../models/User');
 // const Transaction = require('../models/Transaction');
 // const WithdrawRequest = require('../models/WithdrawRequest');
- const Transaction = require("../models/Transection")
- const WithdrawRequest = require("../models/widhdrawRequest")
+const Transaction = require("../models/Transection")
+const Withdraw = require("../models/widhdrawRequest");
+const Deposit = require('../models/Deposit');
 router.get('/balance', auth, async (req, res) => {
     const u = await User.findById(req.user);
     res.json({ balance: u.walletBalance });
@@ -15,58 +16,76 @@ router.get('/balance', auth, async (req, res) => {
 router.get('/profile', auth, async (req, res) => {
     const u = await User.findById(req.user);
     u.password = undefined;
-    res.json({user :u, balance:u.walletBalance});
+    res.json({ user: u, balance: u.walletBalance });
 });
 
 
 // Mock deposit (use real gateway in prod)
-router.post('/deposit', auth, async (req, res) => {
+router.post("/deposit", auth, async (req, res) => {
+    try {
+        const { amount, paymentMethod, utr } = req.body;
+        if (!amount || !paymentMethod || !utr) {
+            res.status(201).json({ message: "all field menedetory", deposit });
+        }
+        if (amount < 100) {
+            res.status(201).json({ message: "Minimum 100  res deposite", deposit });
+        }
+        // Check if UTR already exists
+        const existingUTR = await Deposit.findOne({ utr });
+        if (existingUTR) return res.status(400).json({ message: "UTR already used" });
+
+        const deposit = new Deposit({
+            user: req.user,
+            amount,
+            paymentMethod,
+            utr,
+        });
+
+        await deposit.save();
+        res.status(201).json({ message: "Deposit submitted successfully", deposit });
+    } catch (err) {
+        res.status(500).json({ message: "Server error", error: err.message });
+    }
+});
+
+/* router.post('/deposit', auth, async (req, res) => {
     const { amount } = req.body;
     const u = await User.findById(req.user);
     u.walletBalance += Number(amount);
     await u.save();
     await Transaction.create({ userId: u._id, amount, type: 'deposit' });
     res.json({ ok: true, balance: u.walletBalance });
+}); */
+
+router.post("/withdraw", auth, async (req, res) => {
+    try {
+        const { amount, paymentMethod, accountNumber, ifsc } = req.body;
+        const user = await User.findById(req.user);
+        /* if (amount < 110) {
+            return res.status(400).json({ message: "minimun withdraw 110  balance" });
+        } */
+        if (amount > user.walletBalance)
+            return res.status(400).json({ message: "Insufficient wallet balance" });
+
+        const withdraw = new Withdraw({
+            user: user._id,
+            amount,
+            paymentMethod,
+            accountNumber,
+            ifsc,
+        });
+
+        await withdraw.save();
+       return res.status(201).json({ message: "Withdraw request submitted", withdraw,ok:true, balance: user.walletBalance-amount });
+    } catch (err) {
+        res.status(500).json({ message: "Server error", error: err.message });
+    }
 });
 
-router.post('/withdraw', auth, async (req, res) => {
-    const { amount, upi } = req.body;
-    const u = await User.findById(req.user);
-    if (u.walletBalance < amount) return res.status(400).json({ msg: 'Insufficient' });
-    if(amount<110){
-        return res.status(400).json({ msg: 'minimun valance 110' });
-    }
-    u.walletBalance -= Number(amount);
-    await u.save();
-    await WithdrawRequest.create({ userId: u._id, amount, upi });
-    await Transaction.create({ userId: u._id, amount, type: 'withdraw', status: 'pending' });
-    res.json({ ok: true, balance: u.walletBalance });
-});
 
 router.get("/", async (req, res) => {
     const withdraws = await Withdraw.find().sort({ createdAt: -1 });
     res.json(withdraws);
-});
-
-// Approve withdraw
-router.put("/:id/approve", async (req, res) => {
-    const withdraw = await Withdraw.findByIdAndUpdate(
-        req.params.id,
-        { status: "approved", updatedAt: new Date() },
-        { new: true }
-    );
-    res.json(withdraw);
-});
-
-// Reject withdraw
-router.put("/:id/reject", async (req, res) => {
-    const withdraw = await Withdraw.findByIdAndUpdate(
-        req.params.id,
-        { status: "rejected", updatedAt: new Date() },
-        { new: true }
-    );
-    res.json(withdraw);
-
 });
 
 
