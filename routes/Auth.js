@@ -7,7 +7,8 @@ const router = express.Router();
 router.post('/register', async (req, res) => {
     const { email,name, password,phone } = req.body;
     if (!email, !name || !password, !phone) return res.status(400).json({ msg: 'Missing' });
-    const exists = await User.findOne({ email ,phone});
+    const exists = await User.findOne({ $or:[{email:email.toLowerCase()},{phone:phone.toLowerCase()}]});
+
     if (exists) return res.status(400).json({ msg: 'User exists' });
     const hash = await bcrypt.hash(password, 10);
     const user = await User.create({ email ,name,phone, password: hash });

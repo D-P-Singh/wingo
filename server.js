@@ -18,7 +18,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({ origin: 'https://wingo91.netlify.app', credentials: true }));
 app.use(express.json());
-
+ 
 // Rate limiter
 app.use(rateLimit({ windowMs: 10 * 1000, max: 50 }));
 

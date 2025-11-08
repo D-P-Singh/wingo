@@ -33,12 +33,44 @@ router.post('/withdraw', auth, async (req, res) => {
     const { amount, upi } = req.body;
     const u = await User.findById(req.user);
     if (u.walletBalance < amount) return res.status(400).json({ msg: 'Insufficient' });
+    if(amount<110){
+        return res.status(400).json({ msg: 'minimun valance 110' });
+    }
     u.walletBalance -= Number(amount);
     await u.save();
     await WithdrawRequest.create({ userId: u._id, amount, upi });
     await Transaction.create({ userId: u._id, amount, type: 'withdraw', status: 'pending' });
     res.json({ ok: true, balance: u.walletBalance });
 });
+
+router.get("/", async (req, res) => {
+    const withdraws = await Withdraw.find().sort({ createdAt: -1 });
+    res.json(withdraws);
+});
+
+// Approve withdraw
+router.put("/:id/approve", async (req, res) => {
+    const withdraw = await Withdraw.findByIdAndUpdate(
+        req.params.id,
+        { status: "approved", updatedAt: new Date() },
+        { new: true }
+    );
+    res.json(withdraw);
+});
+
+// Reject withdraw
+router.put("/:id/reject", async (req, res) => {
+    const withdraw = await Withdraw.findByIdAndUpdate(
+        req.params.id,
+        { status: "rejected", updatedAt: new Date() },
+        { new: true }
+    );
+    res.json(withdraw);
+
+});
+
+
+
 
 module.exports = router;
 
