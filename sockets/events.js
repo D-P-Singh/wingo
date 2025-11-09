@@ -4,7 +4,7 @@ const Transaction = require('../models/Transection');
 const { ensureRound, periodIndex } = require('../helpers/rounds');
 
 const BET_LOCK_MS = 5000; // example
-
+ 
 module.exports = (socket, io) => {
     const now = Date.now();
     const idx = periodIndex(now);
@@ -33,9 +33,42 @@ module.exports = (socket, io) => {
             );
 
             if (!user) return socket.emit('bet_placed', { ok: false, error: 'Insufficient balance' });
+            const bet = await Bet.create({
+                user: user._id,
+                roundNumber,
+                type,
+                value,
+                stake: sStake,
+                paid: false,
+                createdAt: Date.now(),
+            });
 
-            const bet = await Bet.create({ user: user._id, roundNumber, type, value, stake: sStake, paid: false, createdAt: Date.now() });
-            await Transaction.create({ userId: user._id, amount: sStake, type: 'bet', meta: { roundNumber, betId: bet._id } });
+            // 💰 Wallet update
+            const walletBefore = user.walletBalance;
+            user.walletBalance -= Number(sStake);
+            const walletAfter = user.walletBalance;
+            await user.save();
+
+            // 🧾 Transaction record
+            await Transaction.create({
+                userId: user._id,
+                amount: sStake,
+                type: "bet",
+                status: "success",
+                gameType: "wingo", // optional: change if multiple games
+                roundNumber,
+                betId: bet._id,
+                walletBefore,
+                walletAfter,
+                meta: {
+                    pickedColor: type === "color" ? value : undefined,
+                    pickedNumber: type === "number" ? value : undefined,
+                    remark: `User placed a bet on ${type}: ${value}`,
+                },
+            });
+
+            // const bet = await Bet.create({ user: user._id, roundNumber, type, value, stake: sStake, paid: false, createdAt: Date.now() });
+            // await Transaction.create({ userId: user._id, amount: sStake, type: 'bet', meta: { roundNumber, betId: bet._id } });
 
             socket.emit('bet_placed', { ok: true, bet, balance: user.walletBalance });
             io.emit('new_bet', { roundNumber, type, value, stake: sStake });

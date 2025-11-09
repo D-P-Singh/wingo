@@ -1,11 +1,10 @@
-
 const mongoose = require("mongoose");
 
 const depositSchema = new mongoose.Schema(
     {
         user: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User", // Reference to your User model
+            ref: "User",
             required: true,
         },
         amount: {
@@ -15,13 +14,13 @@ const depositSchema = new mongoose.Schema(
         },
         paymentMethod: {
             type: String,
-            enum: ["UPI", "Bank Transfer", "Paytm", "Other"], // Add as per your system
+            enum: ["UPI", "Bank Transfer", "Paytm", "Other"],
             required: true,
         },
         utr: {
             type: String,
             required: true,
-            unique: true, // ensures no duplicate UTRs
+            unique: true,
         },
         status: {
             type: String,
@@ -30,14 +29,15 @@ const depositSchema = new mongoose.Schema(
         },
         approvedBy: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Admin", // Optional: Admin who approved
+            ref: "Admin",
         },
         approvedAt: {
             type: Date,
         },
-        createdAt: {
-            type: Date,
-            default: Date.now,
+        remark: {
+            type: String,
+            default: "",
+            trim: true,
         },
     },
     { timestamps: true }

@@ -15,6 +15,12 @@ const userSchema = new mongoose.Schema({
     emailVerified: { type: Boolean, default: false },
     phoneVerified: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false }, // Admin flag
+    blocked: { type: Boolean, default: false },
+    blockedIPs: [String],         // list of blocked IPs
+    blockedDevices: [String],     // list of blocked device identifiers
+    lastLogin: Date,
+    ip: String, 
+    device: String,
 }, { timestamps: true });
 module.exports = mongoose.model("User", userSchema);
 

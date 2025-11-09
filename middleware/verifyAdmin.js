@@ -18,7 +18,7 @@ module.exports = function (req, res, next) {
 };
 
 
-const jwt = require("jsonwebtoken");
+
 const User = require("../models/User"); // Assuming User model has `isAdmin` field
 
 const verifyAdmin = async (req, res, next) => {

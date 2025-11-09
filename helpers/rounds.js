@@ -30,7 +30,9 @@ async function drawResultFor(prev, io) {
     );
 
     if (!updatedRound) return;
-    await evaluateBetsFor(prev, picked);
+   /*  await evaluateBetsFor(prev, picked);
+ */
+    await evaluateBetsFor(prev, picked, io);
 
     io.emit('round_result', { roundNumber: prev, result: picked, time: Date.now(), source: 'system' });
     io.emit('new_result', { result: picked, color: numberToColor(picked), roundNumber: prev });

@@ -6,20 +6,21 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const { Server } = require('socket.io');
-
 const authRoutes = require('./routes/Auth');
 const walletRoutes = require('./routes/wallet_routes');
 const betRoutes = require('./routes/Bet_Routes');
 const userRoutes = require('./routes/User_Routes');
-//const adminRoutes = require('./admin/routes/admin_routes');
+const Admin_Routes = require('./routes/Admin_Routes');
 const initSockets = require('./sockets/index');
 const scheduler = require('./sheduler/sheduler');
 
 const app = express();
 app.use(helmet());
 const allowedOrigins = [
-    "http://localhost:3000",      // local frontend
-    "https://wingo91.netlify.app"    // live frontend
+    "http://localhost:3001",    // local admin
+    "http://localhost:3000",   // local frontend
+    "https://wingo91.netlify.app" ,
+    "https://wingoadmin.netlify.app"   // live frontend
 ];
 app.use(cors({
     origin: function (origin, callback) {
@@ -35,13 +36,13 @@ app.use(express.json());
  
 // Rate limiter
 app.use(rateLimit({ windowMs: 10 * 1000, max: 50 }));
-
+ 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/bet', betRoutes);   
 app.use('/api/user', userRoutes);   
-//app.use('/admin', adminRoutes);
+app.use('/api/admin', Admin_Routes);
 app.get('/', (req, res) => res.send("running"));
 // Diagnostic endpoint
 app.get('/api/time', (req, res) => res.json({ serverTime: Date.now() }));

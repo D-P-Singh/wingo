@@ -15,12 +15,37 @@ router.post('/register', async (req, res) => {
     res.json({ ok: true, userId: user._id });
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req,res,next)=>{
+    // During login or any request
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
+
+    const deviceId = req.headers['user-agent'];
+ // or some device fingerprint
+
+    const user = await User.findOne({ phone: req.body.phone });
+    user.device = deviceId;
+        user.ip = ip;
+        user.lastLogin = new Date();
+        user.save();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Check IP/device block
+    if (user.blockedIPs.includes(ip)) return res.status(403).json({ error: 'IP blocked' });
+    if (user.blockedDevices.includes(deviceId)) return res.status(403).json({ error: 'Device blocked' });
+next();
+
+}, async (req, res) => {
     const { phone, password } = req.body;
     const user = await User.findOne({ phone });
     if (!user) return res.status(400).json({ msg: 'Invalid' });
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ msg: 'Invalid' });
+    if (!match) return res.status(400).json({ msg: 'Invalid password' });
+
+    user.ip = req.ip;
+    user.device = req.headers['user-agent'];
+   // console.log("kk",req.ip, req.headers['user-agent']);
+
+    await user.save();
     const token = jwt.sign({ id: user._id }, "dev");
     res.json({ ok: true, token, userId: user._id, wallet: user.walletBalance });
 
