@@ -55,6 +55,8 @@ async function evaluateBetsFor(roundNumber, picked, io, resultSource = 'system')
                 amount: totalAmount,
                 type: 'win',
                 meta: { roundNumber },
+                status:"success",
+                betId: updated._id,
             });
         }
 

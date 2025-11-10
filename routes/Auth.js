@@ -13,15 +13,13 @@ router.post('/register', async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     const user = await User.create({ email ,name,phone, password: hash });
     res.json({ ok: true, userId: user._id });
-});
+}); 
 
 router.post('/login', async (req,res,next)=>{
     // During login or any request
     const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
-
     const deviceId = req.headers['user-agent'];
  // or some device fingerprint
-
     const user = await User.findOne({ phone: req.body.phone });
     user.device = deviceId;
         user.ip = ip;
@@ -32,7 +30,7 @@ router.post('/login', async (req,res,next)=>{
     // Check IP/device block
     if (user.blockedIPs.includes(ip)) return res.status(403).json({ error: 'IP blocked' });
     if (user.blockedDevices.includes(deviceId)) return res.status(403).json({ error: 'Device blocked' });
-next();
+next(); 
 
 }, async (req, res) => {
     const { phone, password } = req.body;

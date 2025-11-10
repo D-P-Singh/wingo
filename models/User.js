@@ -14,14 +14,19 @@ const userSchema = new mongoose.Schema({
     photo: String,
     emailVerified: { type: Boolean, default: false },
     phoneVerified: { type: Boolean, default: false },
+    inviteCode: { type: String, unique: true, index: true }, // e.g. "DEV123"
+    referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     isAdmin: { type: Boolean, default: false }, // Admin flag
     blocked: { type: Boolean, default: false },
     blockedIPs: [String],         // list of blocked IPs
     blockedDevices: [String],     // list of blocked device identifiers
     lastLogin: Date,
-    ip: String, 
+    ip: String,   
     device: String,
 }, { timestamps: true });
+
+
+
 module.exports = mongoose.model("User", userSchema);
 
 

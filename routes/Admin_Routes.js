@@ -7,6 +7,7 @@ const { getDeposits } = require("../controllers/Admin_con");
 const Transection = require("../models/Transection");
 const Withdraw = require("../models/widhdrawRequest");
 const router = express.Router();
+const Bet = require('../models/Bet');
 // --------- All Users (Admin) ----------
 router.get("/users", async (req, res) => {
     try {
@@ -17,22 +18,44 @@ router.get("/users", async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: "Server error", error: err.message });
     }
-});  
- 
+});
+// GET full user (with bets, transactions, KYC, activity)
+router.get('/users/:id/full', async (req, res) => {
+    console.log(req.params.id);
+    const id = req.params.id;
+    const user = await User.findById(id).lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+
+    // fetch related data (limit sizes)
+    const bets = await Bet.find({ user: id }).sort({ createdAt: -1 }).limit(50).lean();
+    const tx = await Transection.find({ userId: id }).sort({ createdAt: -1 }).limit(50).lean();
+    //const audit = await Audit.find({ entityId: id }).sort({ at: -1 }).limit(50).lean();
+
+    console.log("full user data", { ...user, bets, transactions: tx, });
+    return res.json({ data: { ...user, bets, transactions: tx, } }); //audit
+});
 // PUT /admin/users/block-ip-device
 router.put('/users/block-ip-device', async (req, res) => {
-    const { ids, value } = req.body;
-    // blockType: 'ip' | 'device'
+    const { ids, blockType, value } = req.body;
+    // blockType: 'ip' | 'device' 
     // value: IP or Device ID to block
 
-    if (!ids  || !value) return res.status(400).json({ error: 'Missing parameters' });
- 
+    if (!ids || !value, !blockType) return res.status(400).json({ error: 'Missing parameters' });
     try {
-        await User.updateMany(
-            { _id: { $in: ids } },
-            blockType === 'ip' ? { $addToSet: { blockedIPs: value } } : { $addToSet: { blockedDevices: value } }
-        );
+        if (blockType == "block") {
+            const res = await User.updateOne({ _id: ids[0] }, { blocked: true })
+            return res.status(200).json({ success: true, message: `Users blocked successfully` });
+        } else if (blockType == "unblock") {
+            const res = await User.updateOne({ _id: ids[0] }, { blocked: false })
+            return res.status(200).json({ success: true, message: `Users unblocked successfully` });
+        }
 
+        const res = await User.updateMany(
+            { _id: { $in: ids } },
+            blockType === "block-ip " ? { $addToSet: { blockedIPs: value } } : { $addToSet: { blockedDevices: value } }
+        );
+        console.log("block res", res);
         res.json({ success: true, message: `${blockType} blocked for selected users` });
     } catch (err) {
         console.error(err);
@@ -93,9 +116,9 @@ router.get("/deposits", async (req, res) => {
 });
 
 // ✅ Approve/Reject Deposit (Admin)
-router.put("/deposit/:id/status", verifyAdmin, async (req, res) => {
+router.put("/deposit/:id/status", async (req, res) => {
     try {
-        
+
         const { status, remark } = req.body; // status: approved / rejected, remark: string
         const deposit = await Deposit.findById(req.params.id);
         if (deposit.status !== "pending") {
@@ -120,7 +143,7 @@ router.put("/deposit/:id/status", verifyAdmin, async (req, res) => {
 
             await Promise.all([
                 user.save(),
-                Transaction.create({
+                Transection.create({
                     userId: user._id,
                     type: "deposit",
                     amount: deposit.amount,
@@ -136,7 +159,7 @@ router.put("/deposit/:id/status", verifyAdmin, async (req, res) => {
 
         // 🔴 If rejected → just add a failed transaction record
         if (status === "rejected") {
-            await Transaction.create({
+            await Transection.create({
                 userId: deposit.user,
                 type: "deposit",
                 amount: deposit.amount,
@@ -189,12 +212,12 @@ router.put("/withdraw/:id/approve", async (req, res) => {
         res.status(500).json({ message: "Server error", error: err.message });
     }
 });
- 
+
 
 // ❌ Reject Withdraw (Admin)
 router.put("/withdraw/:id/reject", async (req, res) => {
-    console.log("reject withdraw",req.params.id, req.body);
-    try { 
+    console.log("reject withdraw", req.params.id, req.body);
+    try {
         const { remark } = req.body;
         const withdraw = await Withdraw.findById(req.params.id);
         if (!withdraw) return res.status(404).json({ message: "Withdraw not found" });
@@ -208,7 +231,7 @@ router.put("/withdraw/:id/reject", async (req, res) => {
         withdraw.remark = remark || "";
         withdraw.updatedAt = new Date();
         await withdraw.save();
- 
+
         // 🪙 Refund user balance
         const user = await User.findById(withdraw.user);
         const walletBefore = user.walletBalance || 0;
@@ -259,7 +282,7 @@ router.get("/transactions", async (req, res) => {
     }
 });
 
- router.get("/deposits", getDeposits)
+router.get("/deposits", getDeposits)
 // router.get("/deposits", async (req, res) => {
 //     try {
 //         const deposits = await Deposit.find().populate("user", "name email").sort({ createdAt: -1 });
@@ -285,7 +308,7 @@ router.get("/transactions", async (req, res) => {
 
 //         // If approved, credit the user's wallet
 //         if (status === "approved") {
-           
+
 //             const user = await User.findById(deposit.user);
 //             user.walletBalance = (user.walletBalance || 0) + deposit.amount;
 //             await user.save();

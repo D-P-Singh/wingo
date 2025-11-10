@@ -15,13 +15,13 @@ const initSockets = require('./sockets/index');
 const scheduler = require('./sheduler/sheduler');
 
 const app = express();
-app.use(helmet());
+app.use(helmet()); 
 const allowedOrigins = [
     "http://localhost:3001",    // local admin
     "http://localhost:3000",   // local frontend
     "https://wingo91.netlify.app" ,
     "https://wingoadmin.netlify.app"   // live frontend
-];
+]; 
 app.use(cors({
     origin: function (origin, callback) {
         // allow requests with no origin (like Postman)
@@ -36,7 +36,7 @@ app.use(express.json());
  
 // Rate limiter
 app.use(rateLimit({ windowMs: 10 * 1000, max: 50 }));
- 
+  
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
